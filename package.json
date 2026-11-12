@@ -1,0 +1,32 @@
+{
+  "name": "watchshift",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WATCHSHIFT: an agent operations control tower. Three simulated agents run for real against a control plane that gates, fences, approves, kills, replays and audits every action.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=24.13.0 <25" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/main.ts",
+    "dev:ui": "vite",
+    "build": "vite build",
+    "typecheck": "node scripts/typecheck.mjs",
+    "test": "node --disable-warning=ExperimentalWarning --test \"test/**/*.test.ts\"",
+    "test:e2e": "playwright test",
+    "failure-test": "node --disable-warning=ExperimentalWarning scripts/failure-test.ts",
+    "verify-audit": "node --disable-warning=ExperimentalWarning scripts/verify-audit.ts"
+  },
+  "dependencies": { "pg": "8.23.1" },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.4"
+  }
+}
