@@ -1,0 +1,34 @@
+[
+  {
+    "id": "title",
+    "text": "Three AI agents are at work. Who is actually in control?"
+  },
+  {
+    "id": "fleet",
+    "text": "Three AI agents are running a simulated company. ReleaseOps ships releases, SupportOps works tickets and refunds, InfraOps chases a cost spike. Every step they take is a proposal, not an action."
+  },
+  {
+    "id": "approval",
+    "text": "A production canary needs a human. The card shows the exact tool, the parameters, the evidence, and the rule. Approve, and that consent is bound to this action only."
+  },
+  {
+    "id": "pause",
+    "text": "Pause an agent, and its pending approvals are revoked. Resume, and it re-plans from the current state."
+  },
+  {
+    "id": "rogue",
+    "text": "Now a poisoned runbook tells InfraOps to export the customer table to an outside bucket. Policy blocks it before any effect, and the agent is quarantined. Without the tower, twelve thousand rows would have left. With it, zero."
+  },
+  {
+    "id": "kill",
+    "text": "Kill it. Its epoch is fenced, so when a stale worker retries the cached export, the commit gate refuses it."
+  },
+  {
+    "id": "replay",
+    "text": "Replay shows the last steps from the persisted log: what it proposed, what policy said, what it cost, and who intervened. The audit export is scoped to your team, and its hash chain verifies offline."
+  },
+  {
+    "id": "end",
+    "text": "WATCHSHIFT. The agent can think anything. It can only do what the control plane allows."
+  }
+]

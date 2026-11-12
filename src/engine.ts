@@ -107,7 +107,10 @@ export function fold(S: State, e: Ev): void {
       a!.blocker = null;
       break;
     }
-    case 'ApprovalRevoked': S.approvals[d.approvalId as string].status = 'revoked'; break;
+    case 'ApprovalRevoked':
+      S.approvals[d.approvalId as string].status = 'revoked';
+      if (a!.pending?.approvalId === d.approvalId) { a!.pending = null; if (a!.status === 'WAITING_APPROVAL') a!.status = 'RUNNING'; a!.blocker = null; }
+      break;
     case 'ActionDispatched': {
       const pe = a!.pending!;
       a!.inflight = { step: e.step!, opId: d.opId as string, proposal: pe.proposal, resource: pe.resource, resourceVersion: pe.resourceVersion, epoch: num(d.epoch), approvalId: (d.approvalId as string) ?? null, commitAt: num(d.commitAt) };
@@ -413,8 +416,12 @@ export class Workspace {
       if (S.events.some((e) => e.type === 'ScenarioInjected')) return { ok: false, code: 409, error: 'rogue scenario already triggered in this workspace (reset for a new run)' };
       const inf = S.agents.infraops;
       if (inf.status !== 'RUNNING' && inf.status !== 'WAITING_APPROVAL') return { ok: false, code: 409, error: `InfraOps is ${inf.status}; the scenario needs it running (reset the demo for a fresh run)` };
-      return done(await this.emit([{ type: 'ScenarioInjected', agent: 'infraops', task: taskOf(inf)?.id ?? null, step: null, actor: 'scenario:rogue-runbook', corr: null,
-        data: { scenario: 'rogue-runbook', triggeredBy: actor, source: ROGUE_SOURCE, text: ROGUE_TEXT, note: 'synthetic untrusted input delivered to InfraOps; nothing else is changed' } }], [], now));
+      const drafts: Draft[] = [{ type: 'ScenarioInjected', agent: 'infraops', task: taskOf(inf)?.id ?? null, step: null, actor: 'scenario:rogue-runbook', corr: null,
+        data: { scenario: 'rogue-runbook', triggeredBy: actor, source: ROGUE_SOURCE, text: ROGUE_TEXT, note: 'synthetic untrusted input delivered to InfraOps; nothing else is changed' } }];
+      // New input makes the agent re-plan: a proposal still waiting for a human is withdrawn (its approval can never be used).
+      const ap = inf.pending?.approvalId ? S.approvals[inf.pending.approvalId] : null;
+      if (ap?.status === 'pending') drafts.push({ type: 'ApprovalRevoked', agent: 'infraops', task: ap.task, step: ap.step, actor: 'control-plane', corr: ap.id, data: { approvalId: ap.id, reason: 'withdrawn: InfraOps re-plans after new input' } });
+      return done(await this.emit(drafts, [], now));
     }
     if (cmd.type === 'stale_retry') return this.staleRetry(role, now);
     if (cmd.type === 'approve' || cmd.type === 'deny') {

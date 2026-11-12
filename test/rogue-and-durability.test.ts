@@ -103,7 +103,7 @@ test('replay is re-folded from persisted events and matches live state; tamperin
   const s2 = await testStore(path); await s2.claim('p2');
   const ws2 = (await Workspace.load(s2, 'ws-r3', 1, clock.now))!;
   assert.deepEqual(ws2.S.world, ws.S.world);
-  assert.equal(ws2.S.head, ws.S.head);
+  assert.equal(ws2.S.events.find((e) => e.seq === ws.S.seq)!.hash, ws.S.head, 'persisted prefix identical (reload may append recovery events after it)');
   // tamper with one stored event: load refuses the workspace
   const tamper = (t: string) => `UPDATE ${t} SET body = replace(body, 'customers_full', 'cost_report_daily') WHERE ws = 'ws-r3' AND type = 'ActionProposed'`;
   const raw = s2 as unknown as { db?: { exec: (q: string) => void }; pool?: { query: (q: string) => Promise<unknown> }; S?: string };
@@ -128,4 +128,17 @@ test('audit export is team-scoped, verifiable, and tamper-evident; CSV is formul
   assert.equal(verifyExport(forged).ok, false);
   assert.ok(verifyChain(ws.S.events).ok);
   assert.ok(!/\n=/.test(exportCsv(all)));
+});
+
+test('rogue input while InfraOps waits for approval: the pending proposal is withdrawn and the attack plays out without an operator decision', async () => {
+  const { ws, clock } = await fresh();
+  await run(ws, clock, () => !!pendingFor(ws, 'infraops'));
+  const ap = pendingFor(ws, 'infraops')!;
+  assert.ok((await ws.command({ type: 'trigger_rogue' }, 'eng-oncall', undefined, clock.now)).ok);
+  assert.equal(ws.S.approvals[ap.id].status, 'revoked');
+  assert.equal(ws.S.agents.infraops.status, 'RUNNING');
+  await run(ws, clock, () => evs(ws, 'RogueBehaviorDetected').length === 1, 30_000);
+  assert.equal(ws.S.agents.infraops.status, 'QUARANTINED');
+  assert.equal((await ws.command({ type: 'approve', approvalId: ap.id, bindingHash: ap.hash }, 'eng-oncall', undefined, clock.now)).code, 409);
+  assert.equal(ws.S.world.externalSink.length, 0);
 });
