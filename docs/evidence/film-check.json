@@ -1,0 +1,68 @@
+{
+  "file": "film/out/watchshift-film.mp4",
+  "ok": true,
+  "checks": {
+    "duration": {
+      "value": 89.97,
+      "ok": true
+    },
+    "resolution": {
+      "value": "1920x1080",
+      "ok": true
+    },
+    "fps": {
+      "value": 30,
+      "ok": true
+    },
+    "frames": {
+      "value": 2699,
+      "ok": true
+    },
+    "codecs": {
+      "value": "h264/yuv420p + aac 48000Hz 2ch + mov_text",
+      "ok": true
+    },
+    "blackFrames": {
+      "value": [
+        [
+          79.9,
+          80.3
+        ]
+      ],
+      "ok": true
+    },
+    "audioClipping": {
+      "value": {
+        "samplePeakDb": -4.24681,
+        "truePeakDbtp": -4.2
+      },
+      "ok": true
+    },
+    "loudness": {
+      "value": -17.2,
+      "ok": true
+    },
+    "captions": {
+      "value": {
+        "cues": 21,
+        "lastEnd": 86.475,
+        "inSilence": []
+      },
+      "ok": true
+    },
+    "endingLogoVisible": {
+      "value": {
+        "meanAbsDiffVsLogoMaster": 0.5
+      },
+      "ok": true
+    },
+    "endingStable": {
+      "value": {
+        "meanAbsDiffLast2s": 0.04,
+        "lastFrameLuma": 17.5
+      },
+      "ok": true
+    }
+  },
+  "note": "Automated checks only; no human listening review is claimed."
+}

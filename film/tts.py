@@ -15,7 +15,7 @@ def say(t):
     return t
 durations = {}
 for seg in json.loads((here / 'narration.json').read_text(encoding='utf8')):
-    audio = np.concatenate([np.asarray(a) for _, _, a in pipe(say(seg['text']), voice='am_michael', speed=1.0)])
+    audio = np.concatenate([np.asarray(a) for _, _, a in pipe(say(seg['text']), voice='am_michael', speed=1.05)])
     sf.write(out / f"{seg['id']}.wav", audio, 24000)
     durations[seg['id']] = round(len(audio) / 24000, 3)
     print(seg['id'], durations[seg['id']])

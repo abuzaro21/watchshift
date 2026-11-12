@@ -12,7 +12,7 @@ const F = (p) => new URL(p, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, 
 const OUT = F('./out/'), TMP = F('./out/build/');
 rmSync(TMP, { recursive: true, force: true });
 mkdirSync(TMP, { recursive: true });
-const W = 1920, H = 1080, FPS = 30, LEAD = 0.35, TAIL = 0.55;
+const W = 1920, H = 1080, FPS = 30, LEAD = 0.3, TAIL = 0.4;
 const json = (p) => JSON.parse(readFileSync(F(p), 'utf8'));
 const voice = json('./out/audio/durations.json');
 const text = Object.fromEntries(json('./narration.json').map((n) => [n.id, n.text]));
@@ -42,24 +42,22 @@ await browser.close();
 // box = [x, y, width] crop of the 1920x1080 capture (16:9), scaled back to full frame.
 const VERIFY_LEN = 5.0;
 const shots = [
-  { id: 'title', clip: 0.3, box: [0, 0, 1920], voice: 'title', noOut: true },
-  { id: 'fleet', clip: 'continue', box: [0, 0, 1920], voice: 'fleet', noIn: true },
+  { id: 'title', clip: marks.title, box: [0, 0, 1920], voice: 'title', noOut: true },
+  { id: 'fleet', clip: marks.fleet, box: [0, 0, 1920], voice: 'fleet', noIn: true },
   { id: 'approval', clip: marks.approval, box: [0, 0, 1530], voice: 'approval' },
-  { id: 'pause', clip: marks.pause - 0.3, box: [0, 0, 1530], voice: 'pause' },
+  { id: 'pause', clip: marks.pause, box: [0, 0, 1530], voice: 'pause' },
   { id: 'rogue', clip: marks.rogue, box: [0, 0, 1920], voice: 'rogue' },
   { id: 'kill', clip: marks.kill, box: [0, 0, 1700], voice: 'kill' },
-  { id: 'replay', clip: marks.replay + 0.8, box: [210, 90, 1500], voice: 'replay', cut: VERIFY_LEN },
+  { id: 'replay', clip: marks.replay, box: [210, 90, 1500], voice: 'replay', cut: VERIFY_LEN },
   { id: 'verify', card: 'verify', len: VERIFY_LEN },
   { id: 'end', logo: true, voice: 'end', len: +(voice.end + LEAD + 3.4).toFixed(2) },
 ];
-let t = 0, prevEnd = 0;
+let t = 0;
 const timeline = [], segs = [];
 for (const s of shots) {
   const len = s.len ?? +(voice[s.voice] + LEAD + TAIL - (s.cut ?? 0)).toFixed(3);
   const out = `${TMP}${String(segs.length).padStart(2, '0')}-${s.id}.mp4`;
   const fade = [s.noIn ? '' : 'fade=t=in:st=0:d=0.25', s.noOut ? '' : `fade=t=out:st=${(len - 0.25).toFixed(2)}:d=0.25`].filter(Boolean).join(',') || 'null';
-  if (s.clip === 'continue') s.clip = prevEnd;
-  if (typeof s.clip === 'number') prevEnd = s.clip + len;
   if (s.logo) {
     execFileSync(process.execPath, [F('./logo.mjs'), String(len)], { stdio: 'inherit' });
     ff('-framerate', String(FPS), '-i', F('./out/logo/%04d.png'), '-vf', `fade=t=in:st=0:d=0.4`, ...ENC, out);
@@ -102,6 +100,6 @@ writeFileSync(srt, cues.join('\n'));
 
 const final = `${OUT}watchshift-film.mp4`;
 ff('-i', `${TMP}video.mp4`, '-i', `${TMP}voice.wav`, '-i', srt, '-map', '0:v', '-map', '1:a', '-map', '2:s', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k',
-  '-c:s', 'mov_text', '-metadata:s:s:0', 'language=eng', '-movflags', '+faststart', '-shortest', final);
+  '-c:s', 'mov_text', '-metadata:s:s:0', 'language=eng', '-movflags', '+faststart', '-t', String(total), final);
 writeFileSync(F('./out/edl.json'), JSON.stringify({ total, shots: shots.map((s) => ({ id: s.id, clip: s.clip ?? null, box: s.box ?? null })), timeline }, null, 2));
 console.log(`built ${final} (${total.toFixed(1)} s)`);

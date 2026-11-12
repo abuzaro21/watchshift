@@ -1,4 +1,1 @@
-
-> watchshift@0.1.0 typecheck
-> node scripts/typecheck.mjs
-
+typecheck exit=0

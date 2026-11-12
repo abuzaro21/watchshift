@@ -5,7 +5,7 @@
 // Usage: npm run build && node film/capture.mjs
 import { chromium } from '@playwright/test';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdirSync, renameSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdirSync, renameSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 
 const F = (p) => new URL(p, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const PORT = 3410, OUT = F('./out/raw/');
@@ -30,59 +30,54 @@ const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, 
 await ctx.addInitScript(POINTER);
 const page = await ctx.newPage();
 const t0 = Date.now(), marks = {};
-const mark = (k) => { marks[k] = (Date.now() - t0) / 1000; console.log(`${k} @ ${marks[k].toFixed(1)}s`); };
 const wait = (ms) => page.waitForTimeout(ms);
 const press = async (loc) => { await loc.scrollIntoViewIfNeeded(); await loc.hover(); await wait(700); await loc.click(); };
 const card = (name) => page.getByRole('article', { name: new RegExp(`^${name},`) });
+// Scenes are paced to the narration (film/out/audio/durations.json) so the film is one contiguous take per scene.
+const voice = JSON.parse(readFileSync(F('./out/audio/durations.json'), 'utf8'));
+const LEAD = 0.3, TAIL = 0.4, VERIFY_LEN = 5.0;
+const at = async (start, s) => { const ms = start + s * 1000 - Date.now(); if (ms > 0) await wait(ms); };
+async function scene(id, fn, cut = 0) {
+  const start = Date.now();
+  marks[id] = (start - t0) / 1000;
+  console.log(`${id} @ ${marks[id].toFixed(1)}s`);
+  await fn((s) => at(start, s));
+  await at(start, voice[id] + LEAD + TAIL - cut);
+}
 
 try {
   await page.goto(`http://127.0.0.1:${PORT}/`);
-  await wait(1500);
-  await press(page.getByRole('button', { name: /start live demo/i }));
-  mark('fleet');
-  await wait(13_000);
-
-  mark('approval');
+  await wait(600);
+  await scene('title', async (t) => { await t(0.6); await press(page.getByRole('button', { name: /start live demo/i })); });
+  await scene('fleet', async () => {});
   const approve = page.getByRole('region', { name: 'Approval queue' }).locator('.approval').filter({ hasText: 'ReleaseOps' }).getByRole('button', { name: 'Approve' });
-  await approve.waitFor();
-  await approve.hover();
-  await wait(8_000);
-  await approve.click();
-  await wait(4_000);
-
-  mark('pause');
-  await press(card('ReleaseOps').getByRole('button', { name: 'Pause' }));
-  await wait(3_500);
-  await press(card('ReleaseOps').getByRole('button', { name: 'Resume' }));
-  await wait(4_500);
-
-  mark('rogue');
-  await press(page.getByRole('button', { name: 'Trigger rogue agent' }));
-  await wait(1_200);
-  await press(page.getByRole('alertdialog').getByRole('button', { name: 'Trigger rogue agent' }));
-  await page.getByRole('alert', { name: 'Rogue agent contained' }).waitFor({ timeout: 30_000 });
-  await wait(15_000);
-
-  mark('kill');
+  await scene('approval', async (t) => { await approve.waitFor(); await approve.scrollIntoViewIfNeeded(); await approve.hover(); await t(7.6); await approve.click(); });
+  await scene('pause', async (t) => {
+    await press(card('ReleaseOps').getByRole('button', { name: 'Pause' }));
+    await t(3.6); await press(card('ReleaseOps').getByRole('button', { name: 'Resume' }));
+  });
+  await scene('rogue', async () => {
+    await press(page.getByRole('button', { name: 'Trigger rogue agent' }));
+    await wait(500);
+    await press(page.getByRole('alertdialog').getByRole('button', { name: 'Trigger rogue agent' }));
+    await page.getByRole('alert', { name: 'Rogue agent contained' }).waitFor({ timeout: 30_000 });
+  });
   const banner = page.getByRole('alert', { name: 'Rogue agent contained' });
-  await press(banner.getByRole('button', { name: 'Kill InfraOps' }));
-  await wait(1_200);
-  await press(page.getByRole('alertdialog').getByRole('button', { name: 'Kill InfraOps' }));
-  await wait(3_500);
-  await press(banner.getByRole('button', { name: /stale worker retries/ }));
-  await wait(7_000);
-
-  mark('replay');
-  await press(banner.getByRole('button', { name: 'Replay incident' }));
-  await wait(5_000);
-  for (let i = 0; i < 3; i++) { await page.keyboard.press('ArrowLeft'); await wait(1_600); }
-  await wait(3_000);
+  await scene('kill', async (t) => {
+    await press(banner.getByRole('button', { name: 'Kill InfraOps' }));
+    await wait(300);
+    await press(page.getByRole('alertdialog').getByRole('button', { name: 'Kill InfraOps' }));
+    await t(4.2); await press(banner.getByRole('button', { name: /stale worker retries/ }));
+  });
+  await scene('replay', async (t) => {
+    await press(banner.getByRole('button', { name: 'Replay incident' }));
+    for (const s of [4.0, 5.6, 7.2]) { await t(s); await page.keyboard.press('ArrowLeft'); }
+  }, VERIFY_LEN);
+  marks.end = (Date.now() - t0) / 1000;
   await page.keyboard.press('Escape');
   const [dl] = await Promise.all([page.waitForEvent('download'), press(page.getByRole('link', { name: 'Export audit JSON' }))]);
   const file = F('./out/raw/audit.json');
   await dl.saveAs(file);
-  await wait(3_000);
-  mark('end');
   const verify = JSON.parse(execFileSync(process.execPath, ['--disable-warning=ExperimentalWarning', 'scripts/verify-audit.ts', file], { encoding: 'utf8' }));
   writeFileSync(F('./out/raw/verify.json'), JSON.stringify({ ...verify, file: 'watchshift-audit-eng-oncall.json' }, null, 2));
 } finally {

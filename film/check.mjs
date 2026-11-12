@@ -1,7 +1,7 @@
 // Automated checks for the rendered film. Writes film/out/check/report.json and the contact sheet; exits 1 on failure.
 // Usage: node film/check.mjs
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 
 const F = (p) => new URL(p, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const MP4 = F('./out/watchshift-film.mp4'), DIR = F('./out/check/');
@@ -39,7 +39,9 @@ const sig = (t) => run('ffmpeg', ['-v', 'error', '-ss', String(t), '-i', MP4, '-
 const lum = (buf) => [...Buffer.from(buf, 'latin1')].reduce((s, x) => s + x, 0) / buf.length;
 const sA = sig(duration - 2.0), sB = sig(duration - 0.1);
 const endDiff = [...Buffer.from(sA, 'latin1')].reduce((s, x, i) => s + Math.abs(x - Buffer.from(sB, 'latin1')[i]), 0) / sA.length;
-const satmax = Number(/SATMAX=([\d.]+)/.exec(run('ffprobe', ['-v', 'error', '-f', 'lavfi', '-i', `movie=${DIR.replace(/:/g, '\\:')}last.png,signalstats`, '-show_entries', 'frame_tags=lavfi.signalstats.SATMAX', '-of', 'default=nw=1']))?.[1] ?? 0);
+const logoFrames = readdirSync(F('./out/logo/')).filter((f) => f.endsWith('.png')).sort();
+const ref = run('ffmpeg', ['-v', 'error', '-i', F(`./out/logo/${logoFrames.at(-1)}`), '-vf', 'scale=64:36,format=gray', '-f', 'rawvideo', '-']);
+const logoDiff = [...Buffer.from(ref, 'latin1')].reduce((s, x, i) => s + Math.abs(x - Buffer.from(sig(duration - 0.1), 'latin1')[i]), 0) / ref.length;
 
 // contact sheet: 12 evenly spaced frames
 const n = 12;
@@ -56,7 +58,7 @@ const checks = {
   audioClipping: { value: { samplePeakDb: peak, truePeakDbtp: truePeak }, ok: peak < -0.5 && truePeak <= -1.0 },
   loudness: { value: lufs, ok: lufs >= -18 && lufs <= -14 },
   captions: { value: { cues: srt.length, lastEnd: srt.at(-1).to, inSilence: capInSilence }, ok: capOk && capInSilence.length === 0 },
-  endingLogoVisible: { value: { saturationMax: satmax }, ok: satmax > 100 },
+  endingLogoVisible: { value: { meanAbsDiffVsLogoMaster: +logoDiff.toFixed(2) }, ok: logoDiff < 3 },
   endingStable: { value: { meanAbsDiffLast2s: +endDiff.toFixed(2), lastFrameLuma: +lum(sB).toFixed(1) }, ok: endDiff < 2 && lum(sB) > 8 },
 };
 const ok = Object.values(checks).every((c) => c.ok);

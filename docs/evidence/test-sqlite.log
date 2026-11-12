@@ -1,33 +1,36 @@
+# store: SqliteStore (node:sqlite), 2026-11-12T01:51:53Z
 
 > watchshift@0.1.0 test
 > node --disable-warning=ExperimentalWarning --test "test/**/*.test.ts"
 
-✔ three agents execute different jobs and persist effects (49.3545ms)
-✔ a risky action waits at the gate until approved; nothing else can release it (18.3324ms)
-✔ deny changes the outcome: the agent stands down and the release is held (5.3912ms)
-✔ pause revokes approvals and stops effects; resume re-plans and needs a fresh approval (14.2668ms)
-✔ pause in flight aborts the uncommitted effect (7.6562ms)
-✔ kill racing a commit: kill first => no effect; commit first => effect stays and is reported (34.7969ms)
-✔ approval is bound to exact parameters: a substituted action is fenced at dispatch (11.1833ms)
-✔ budget gate blocks the agent; raising the budget lets it continue (5.2249ms)
-✔ injected ticket instructions do not move policy; the refund is blocked and escalated (25.7267ms)
-✔ policy ignores agent rationale; agents cannot emit operator events (0.2465ms)
-✔ duplicate approvals: a second approve is rejected; a retried idempotency key returns the first result (15.915ms)
-✔ stale approvals: expired or wrong-hash approvals never release the action (6.0705ms)
-✔ cross-team and read-only operators are refused in the backend and the refusal is audited (6.0034ms)
-✔ hostile HTTP input: origin, content-type, size, JSON shape, unknown commands, path traversal (68.1461ms)
-✔ repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq (1233.9311ms)
-✔ rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows leave; the unguarded baseline leaks (27.5337ms)
-✔ rogue trigger is idempotent and needs an acting role (3.5717ms)
-✔ restart while waiting for approval: the approval survives and still works (59.2726ms)
-✔ restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated (35.5972ms)
-✔ replay is re-folded from persisted events and matches live state; tampering is detected (102.9462ms)
-✔ audit export is team-scoped, verifiable, and tamper-evident; CSV is formula-safe (9.1461ms)
-ℹ tests 21
+✔ three agents execute different jobs and persist effects (35.2691ms)
+✔ a risky action waits at the gate until approved; nothing else can release it (11.319ms)
+✔ deny changes the outcome: the agent stands down and the release is held (4.9242ms)
+✔ pause revokes approvals and stops effects; resume re-plans and needs a fresh approval (13.1051ms)
+✔ pause in flight aborts the uncommitted effect (6.1631ms)
+✔ kill racing a commit: kill first => no effect; commit first => effect stays and is reported (29.8318ms)
+✔ approval is bound to exact parameters: a substituted action is fenced at dispatch (9.6546ms)
+✔ budget gate blocks the agent; raising the budget lets it continue (4.8726ms)
+✔ injected ticket instructions do not move policy; the refund is blocked and escalated (21.7411ms)
+✔ policy ignores agent rationale; agents cannot emit operator events (0.6121ms)
+✔ duplicate approvals: a second approve is rejected; a retried idempotency key returns the first result (11.3789ms)
+✔ stale approvals: expired or wrong-hash approvals never release the action (4.8577ms)
+✔ cross-team and read-only operators are refused in the backend and the refusal is audited (4.0375ms)
+✔ hostile HTTP input: origin, content-type, size, JSON shape, unknown commands, path traversal (59.1279ms)
+✔ repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq (1235.3895ms)
+✔ rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows leave; the unguarded baseline leaks (19.9422ms)
+✔ rogue trigger is idempotent and needs an acting role (2.0296ms)
+✔ restart while waiting for approval: the approval survives and still works (52.5156ms)
+✔ restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated (28.5893ms)
+✔ replay is re-folded from persisted events and matches live state; tampering is detected (52.8097ms)
+✔ audit export is team-scoped, verifiable, and tamper-evident; CSV is formula-safe (7.3387ms)
+✔ rogue input while InfraOps waits for approval: the pending proposal is withdrawn and the attack plays out without an operator decision (5.2766ms)
+ℹ tests 22
 ℹ suites 0
-ℹ pass 21
+ℹ pass 22
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1562.4219
+ℹ duration_ms 1580.4053
+exit=0

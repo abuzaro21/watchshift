@@ -1,34 +1,37 @@
+# store: PgStore via WATCHSHIFT_TEST_DATABASE_URL (PostgreSQL 16.15 on x86_64-pc-linux-musl), 2026-11-12T01:51:53Z
 
 > watchshift@0.1.0 test
 > node --disable-warning=ExperimentalWarning --test "test/**/*.test.ts"
 
-✔ three agents execute different jobs and persist effects (18695.3791ms)
-✔ a risky action waits at the gate until approved; nothing else can release it (6114.5177ms)
-✔ deny changes the outcome: the agent stands down and the release is held (3832.6816ms)
-✔ pause revokes approvals and stops effects; resume re-plans and needs a fresh approval (4082.9662ms)
-✔ pause in flight aborts the uncommitted effect (2549.6853ms)
-✔ kill racing a commit: kill first => no effect; commit first => effect stays and is reported (7390.4628ms)
-✔ approval is bound to exact parameters: a substituted action is fenced at dispatch (4066.2693ms)
-✔ budget gate blocks the agent; raising the budget lets it continue (2850.1099ms)
-✔ injected ticket instructions do not move policy; the refund is blocked and escalated (8832.5662ms)
-✔ policy ignores agent rationale; agents cannot emit operator events (0.336ms)
-✔ duplicate approvals: a second approve is rejected; a retried idempotency key returns the first result (3507.4325ms)
-✔ stale approvals: expired or wrong-hash approvals never release the action (4940.0954ms)
-✔ cross-team and read-only operators are refused in the backend and the refusal is audited (4916.1612ms)
-✔ hostile HTTP input: origin, content-type, size, JSON shape, unknown commands, path traversal (2159.7989ms)
-✔ repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq (3666.1085ms)
-[watchshift] 4eb405d9-2f2f-43b2-a4c9-f8397c2b8264: Cannot use a pool after calling end on the pool
-✔ rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows leave; the unguarded baseline leaks (6935.7212ms)
-✔ rogue trigger is idempotent and needs an acting role (3445.6387ms)
-✔ restart while waiting for approval: the approval survives and still works (5199.7678ms)
-✔ restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated (3708.383ms)
-✔ replay is re-folded from persisted events and matches live state; tampering is detected (6420.4954ms)
-✔ audit export is team-scoped, verifiable, and tamper-evident; CSV is formula-safe (4189.8788ms)
-ℹ tests 21
+✔ three agents execute different jobs and persist effects (15167.564ms)
+✔ a risky action waits at the gate until approved; nothing else can release it (7203.3815ms)
+✔ deny changes the outcome: the agent stands down and the release is held (4449.456ms)
+✔ pause revokes approvals and stops effects; resume re-plans and needs a fresh approval (4974.5811ms)
+✔ pause in flight aborts the uncommitted effect (1849.4997ms)
+✔ kill racing a commit: kill first => no effect; commit first => effect stays and is reported (6599.566ms)
+✔ approval is bound to exact parameters: a substituted action is fenced at dispatch (3658.2053ms)
+✔ budget gate blocks the agent; raising the budget lets it continue (2782.3476ms)
+✔ injected ticket instructions do not move policy; the refund is blocked and escalated (8707.8403ms)
+✔ policy ignores agent rationale; agents cannot emit operator events (0.3316ms)
+✔ duplicate approvals: a second approve is rejected; a retried idempotency key returns the first result (3300.0975ms)
+✔ stale approvals: expired or wrong-hash approvals never release the action (3474.0011ms)
+✔ cross-team and read-only operators are refused in the backend and the refusal is audited (3582.3048ms)
+✔ hostile HTTP input: origin, content-type, size, JSON shape, unknown commands, path traversal (1886.7355ms)
+✔ repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq (2806.8018ms)
+[watchshift] ef18860f-d42f-42cb-81fa-6d2cf3df1c80: Cannot use a pool after calling end on the pool
+✔ rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows leave; the unguarded baseline leaks (5484.7513ms)
+✔ rogue trigger is idempotent and needs an acting role (2447.4771ms)
+✔ restart while waiting for approval: the approval survives and still works (4307.7522ms)
+✔ restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated (2600.6442ms)
+✔ replay is re-folded from persisted events and matches live state; tampering is detected (5728.1532ms)
+✔ audit export is team-scoped, verifiable, and tamper-evident; CSV is formula-safe (4324.1982ms)
+✔ rogue input while InfraOps waits for approval: the pending proposal is withdrawn and the attack plays out without an operator decision (5935.9877ms)
+ℹ tests 22
 ℹ suites 0
-ℹ pass 21
+ℹ pass 22
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 58604.2281
+ℹ duration_ms 55633.7341
+exit=0
