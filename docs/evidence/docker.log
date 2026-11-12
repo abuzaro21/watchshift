@@ -1,0 +1,6 @@
+# 2026-11-12T02:14:38Z docker build -t watchshift:rc . ; run against local PostgreSQL 16 (fresh schema)
+health: {"ok":true,"store":"postgres","fenced":null,"live":0,"streams":0,"commit":null}
+POST /api/demo/start -> workspace d7cc262d…, seq 7
+docker restart
+GET /api/state (same cookie) -> workspace d7cc262d…, seq 25 (agents resumed from the persisted log)
+logs: listening on :3000 (store postgres, owner epoch 1) / listening on :3000 (store postgres, owner epoch 2)

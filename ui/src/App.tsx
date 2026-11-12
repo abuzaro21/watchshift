@@ -197,7 +197,7 @@ function TopBar({ view, role, setRole, live, onRogue, onReset }: { view: View; r
             {view.roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
           </select>
         </label>
-        <button className="btn danger" onClick={onRogue} disabled={view.scenario.rogueTriggered}>{view.scenario.rogueTriggered ? 'Rogue triggered' : 'Trigger rogue agent'}</button>
+        <button className="btn danger" onClick={onRogue} disabled={view.scenario.rogueTriggered || role !== 'eng-oncall'} title={role !== 'eng-oncall' ? 'InfraOps belongs to Engineering: switch to Engineering on-call' : undefined}>{view.scenario.rogueTriggered ? 'Rogue triggered' : 'Trigger rogue agent'}</button>
         <div className="export">
           <a className="btn" href={`/api/audit?as=${role}`} download>Export audit JSON</a>
           <a className="btn ghost" href={`/api/audit?as=${role}&format=csv`} download>CSV</a>
@@ -337,7 +337,7 @@ function RogueBanner({ view, role, send, openReplay, askConfirm }: { view: View;
         <button className="btn danger" disabled={inf.status === 'KILLED' || role !== 'eng-oncall'} onClick={() => askConfirm({ title: 'Kill InfraOps?', danger: true, action: 'Kill InfraOps',
           body: 'Terminal: InfraOps will never act again. Its epoch is fenced so any worker still holding the old epoch is refused at the commit gate.', run: () => send({ type: 'kill', agent: 'infraops', reason: 'attempted customer-data exfiltration' }, 'InfraOps killed') })}>
           {inf.status === 'KILLED' ? 'InfraOps killed' : 'Kill InfraOps'}</button>
-        <button className="btn" disabled={inf.status !== 'KILLED'} title="A worker that cached the blocked export before containment tries to execute it anyway" onClick={() => send({ type: 'stale_retry' }, 'Stale worker retried the export: fenced at the gate')}>Replay attack: stale worker retries</button>
+        <button className="btn" disabled={inf.status !== 'KILLED' || role !== 'eng-oncall'} title="A worker that cached the blocked export before containment tries to execute it anyway" onClick={() => send({ type: 'stale_retry' }, 'Stale worker retried the export: fenced at the gate')}>Replay attack: stale worker retries</button>
         <button className="btn ghost" onClick={openReplay}>Replay incident</button>
         {role !== 'eng-oncall' && <span className="authority">switch to Engineering on-call to kill</span>}
       </div>

@@ -30,7 +30,9 @@ export function replay(S: State, agent: AgentId, n: number): { agent: AgentId; n
   for (const e of S.events) {
     fold(R, e);
     if (e.agent !== agent) continue;
-    if (e.step !== null) {
+    // Only a newer step opens a new replay row. An event that references an older step (a stale retry, a late
+    // reconciliation) happened now, so it is shown as an intervention on the latest step, not moved back in time.
+    if (e.step !== null && (!cur || e.step >= cur.step)) {
       cur = steps.get(e.step) ?? { step: e.step, task: e.task, from: e.seq, to: e.seq, events: [], interventions: [], after: { status: '', epoch: 0, costUsd: 0, tokens: 0 } };
       steps.set(e.step, cur);
     }
@@ -68,12 +70,16 @@ export function exportAudit(S: State, role: Role, now = Date.now()): AuditExport
     events,
   };
 }
+const STUB_KEYS = new Set(['seq', 'prevHash', 'hash', 'redacted', 'reason']);
 export function verifyExport(x: AuditExport): ChainCheck & { redacted: number } {
   let prev = GENESIS, redacted = 0;
   for (const e of x.events) {
     if (e.prevHash !== prev) return { ok: false, checked: e.seq, head: prev, redacted, error: `#${e.seq}: chain link broken` };
-    if ('redacted' in e) redacted++;
-    else if (hashOf(e) !== e.hash) return { ok: false, checked: e.seq, head: prev, redacted, error: `#${e.seq}: content does not match its hash` };
+    if ('redacted' in e) {
+      // A redacted entry must be a bare stub: anything else could smuggle unverified content past the hash check.
+      if (e.redacted !== true || !Object.keys(e).every((k) => STUB_KEYS.has(k))) return { ok: false, checked: e.seq, head: prev, redacted, error: `#${e.seq}: malformed redacted entry` };
+      redacted++;
+    } else if (hashOf(e) !== e.hash) return { ok: false, checked: e.seq, head: prev, redacted, error: `#${e.seq}: content does not match its hash` };
     prev = e.hash;
   }
   if (prev !== x.headHash) return { ok: false, checked: x.events.length, head: prev, redacted, error: 'head hash does not match the export header' };

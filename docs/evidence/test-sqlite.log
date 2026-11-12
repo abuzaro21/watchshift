@@ -1,36 +1,48 @@
-# store: SqliteStore (node:sqlite), 2026-11-12T01:51:53Z
+# store: SqliteStore (node:sqlite), 2026-11-12T02:12:15Z
 
 > watchshift@0.1.0 test
 > node --disable-warning=ExperimentalWarning --test "test/**/*.test.ts"
 
-✔ three agents execute different jobs and persist effects (35.2691ms)
-✔ a risky action waits at the gate until approved; nothing else can release it (11.319ms)
-✔ deny changes the outcome: the agent stands down and the release is held (4.9242ms)
-✔ pause revokes approvals and stops effects; resume re-plans and needs a fresh approval (13.1051ms)
-✔ pause in flight aborts the uncommitted effect (6.1631ms)
-✔ kill racing a commit: kill first => no effect; commit first => effect stays and is reported (29.8318ms)
-✔ approval is bound to exact parameters: a substituted action is fenced at dispatch (9.6546ms)
-✔ budget gate blocks the agent; raising the budget lets it continue (4.8726ms)
-✔ injected ticket instructions do not move policy; the refund is blocked and escalated (21.7411ms)
-✔ policy ignores agent rationale; agents cannot emit operator events (0.6121ms)
-✔ duplicate approvals: a second approve is rejected; a retried idempotency key returns the first result (11.3789ms)
-✔ stale approvals: expired or wrong-hash approvals never release the action (4.8577ms)
-✔ cross-team and read-only operators are refused in the backend and the refusal is audited (4.0375ms)
-✔ hostile HTTP input: origin, content-type, size, JSON shape, unknown commands, path traversal (59.1279ms)
-✔ repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq (1235.3895ms)
-✔ rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows leave; the unguarded baseline leaks (19.9422ms)
-✔ rogue trigger is idempotent and needs an acting role (2.0296ms)
-✔ restart while waiting for approval: the approval survives and still works (52.5156ms)
-✔ restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated (28.5893ms)
-✔ replay is re-folded from persisted events and matches live state; tampering is detected (52.8097ms)
-✔ audit export is team-scoped, verifiable, and tamper-evident; CSV is formula-safe (7.3387ms)
-✔ rogue input while InfraOps waits for approval: the pending proposal is withdrawn and the attack plays out without an operator decision (5.2766ms)
-ℹ tests 22
+✔ #1 a granted approval that expires before dispatch never executes (14.1669ms)
+✔ #2 concurrent cold loads share one writer; later commands keep working (85.9836ms)
+✔ #3 an allowed proposal stranded before dispatch is dispatched after restart (20.0205ms)
+✔ #4 raising a budget raises the limit policy enforces; a budget-only block is retryable (2.9576ms)
+✔ #5 command idempotency survives reload and is bound to the command (22.9917ms)
+✔ #6 scenario commands need Engineering authority and refusals are audited (4.3154ms)
+✔ #7 audit verification rejects altered events disguised as redacted (3.619ms)
+✔ #8 replay attaches late interventions to the latest step, matching live state (14.9181ms)
+✔ #10 pruning never deletes workspaces that are in use (0.9404ms)
+✔ #5b a keyed refusal stays refused when the same key is retried later (2.7702ms)
+✔ #2b a cached writer dropped after a stream conflict ends its SSE streams (19.6276ms)
+✔ three agents execute different jobs and persist effects (40.923ms)
+✔ a risky action waits at the gate until approved; nothing else can release it (17.2852ms)
+✔ deny changes the outcome: the agent stands down and the release is held (7.069ms)
+✔ pause revokes approvals and stops effects; resume re-plans and needs a fresh approval (14.3143ms)
+✔ pause in flight aborts the uncommitted effect (5.009ms)
+✔ kill racing a commit: kill first => no effect; commit first => effect stays and is reported (28.8693ms)
+✔ approval is bound to exact parameters: a substituted action is fenced at dispatch (12.517ms)
+✔ budget gate blocks the agent; raising the budget lets it continue (8.4288ms)
+✔ injected ticket instructions do not move policy; the refund is blocked and escalated (29.3825ms)
+✔ policy ignores agent rationale; agents cannot emit operator events (0.3153ms)
+✔ duplicate approvals: a second approve is rejected; a retried idempotency key returns the first result (15.9729ms)
+✔ stale approvals: expired or wrong-hash approvals never release the action (4.3098ms)
+✔ cross-team and read-only operators are refused in the backend and the refusal is audited (3.8438ms)
+✔ hostile HTTP input: origin, content-type, size, JSON shape, unknown commands, path traversal (58.5479ms)
+✔ rate limits cannot be dodged by forging X-Forwarded-For (56.8315ms)
+✔ repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq (1227.859ms)
+✔ rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows leave; the unguarded baseline leaks (21.0135ms)
+✔ rogue trigger is idempotent and needs Engineering authority (2.381ms)
+✔ restart while waiting for approval: the approval survives and still works (71.3903ms)
+✔ restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated (36.4547ms)
+✔ replay is re-folded from persisted events and matches live state; tampering is detected (61.1165ms)
+✔ audit export is team-scoped, verifiable, and tamper-evident; CSV is formula-safe (8.3984ms)
+✔ rogue input while InfraOps waits for approval: the pending proposal is withdrawn and the attack plays out without an operator decision (4.9345ms)
+ℹ tests 34
 ℹ suites 0
-ℹ pass 22
+ℹ pass 34
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1580.4053
+ℹ duration_ms 2425.314
 exit=0

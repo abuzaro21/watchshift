@@ -1,37 +1,49 @@
-# store: PgStore via WATCHSHIFT_TEST_DATABASE_URL (PostgreSQL 16.15 on x86_64-pc-linux-musl), 2026-11-12T01:51:53Z
+# store: PgStore via WATCHSHIFT_TEST_DATABASE_URL (PostgreSQL 16), 2026-11-12T02:12:18Z
 
 > watchshift@0.1.0 test
 > node --disable-warning=ExperimentalWarning --test "test/**/*.test.ts"
 
-✔ three agents execute different jobs and persist effects (15167.564ms)
-✔ a risky action waits at the gate until approved; nothing else can release it (7203.3815ms)
-✔ deny changes the outcome: the agent stands down and the release is held (4449.456ms)
-✔ pause revokes approvals and stops effects; resume re-plans and needs a fresh approval (4974.5811ms)
-✔ pause in flight aborts the uncommitted effect (1849.4997ms)
-✔ kill racing a commit: kill first => no effect; commit first => effect stays and is reported (6599.566ms)
-✔ approval is bound to exact parameters: a substituted action is fenced at dispatch (3658.2053ms)
-✔ budget gate blocks the agent; raising the budget lets it continue (2782.3476ms)
-✔ injected ticket instructions do not move policy; the refund is blocked and escalated (8707.8403ms)
-✔ policy ignores agent rationale; agents cannot emit operator events (0.3316ms)
-✔ duplicate approvals: a second approve is rejected; a retried idempotency key returns the first result (3300.0975ms)
-✔ stale approvals: expired or wrong-hash approvals never release the action (3474.0011ms)
-✔ cross-team and read-only operators are refused in the backend and the refusal is audited (3582.3048ms)
-✔ hostile HTTP input: origin, content-type, size, JSON shape, unknown commands, path traversal (1886.7355ms)
-✔ repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq (2806.8018ms)
-[watchshift] ef18860f-d42f-42cb-81fa-6d2cf3df1c80: Cannot use a pool after calling end on the pool
-✔ rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows leave; the unguarded baseline leaks (5484.7513ms)
-✔ rogue trigger is idempotent and needs an acting role (2447.4771ms)
-✔ restart while waiting for approval: the approval survives and still works (4307.7522ms)
-✔ restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated (2600.6442ms)
-✔ replay is re-folded from persisted events and matches live state; tampering is detected (5728.1532ms)
-✔ audit export is team-scoped, verifiable, and tamper-evident; CSV is formula-safe (4324.1982ms)
-✔ rogue input while InfraOps waits for approval: the pending proposal is withdrawn and the attack plays out without an operator decision (5935.9877ms)
-ℹ tests 22
+✔ #1 a granted approval that expires before dispatch never executes (3687.9127ms)
+✔ #2 concurrent cold loads share one writer; later commands keep working (2668.1069ms)
+✔ #3 an allowed proposal stranded before dispatch is dispatched after restart (3422.4667ms)
+✔ #4 raising a budget raises the limit policy enforces; a budget-only block is retryable (3274.4034ms)
+✔ #5 command idempotency survives reload and is bound to the command (2516.3762ms)
+✔ #6 scenario commands need Engineering authority and refusals are audited (4602.7415ms)
+✔ #7 audit verification rejects altered events disguised as redacted (4456.0078ms)
+✔ #8 replay attaches late interventions to the latest step, matching live state (5973.3485ms)
+✔ #10 pruning never deletes workspaces that are in use (3427.3033ms)
+✔ #5b a keyed refusal stays refused when the same key is retried later (3729.426ms)
+✔ #2b a cached writer dropped after a stream conflict ends its SSE streams (2671.3529ms)
+✔ three agents execute different jobs and persist effects (21189.1998ms)
+✔ a risky action waits at the gate until approved; nothing else can release it (10541.175ms)
+✔ deny changes the outcome: the agent stands down and the release is held (6124.5968ms)
+✔ pause revokes approvals and stops effects; resume re-plans and needs a fresh approval (5130.6301ms)
+✔ pause in flight aborts the uncommitted effect (1868.0204ms)
+✔ kill racing a commit: kill first => no effect; commit first => effect stays and is reported (7198.8896ms)
+✔ approval is bound to exact parameters: a substituted action is fenced at dispatch (3750.1736ms)
+✔ budget gate blocks the agent; raising the budget lets it continue (2824.258ms)
+✔ injected ticket instructions do not move policy; the refund is blocked and escalated (8574.5268ms)
+✔ policy ignores agent rationale; agents cannot emit operator events (0.4207ms)
+✔ duplicate approvals: a second approve is rejected; a retried idempotency key returns the first result (3429.1614ms)
+✔ stale approvals: expired or wrong-hash approvals never release the action (5456.743ms)
+✔ cross-team and read-only operators are refused in the backend and the refusal is audited (4841.1919ms)
+✔ hostile HTTP input: origin, content-type, size, JSON shape, unknown commands, path traversal (2620.8044ms)
+✔ rate limits cannot be dodged by forging X-Forwarded-For (2942.4207ms)
+✔ repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq (4088.5462ms)
+[watchshift] 08b1be89-a825-4dd4-96cc-8ce0ad42b070: Cannot use a pool after calling end on the pool
+✔ rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows leave; the unguarded baseline leaks (6750.5241ms)
+✔ rogue trigger is idempotent and needs Engineering authority (3828.2619ms)
+✔ restart while waiting for approval: the approval survives and still works (5775.6117ms)
+✔ restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated (5724.6078ms)
+✔ replay is re-folded from persisted events and matches live state; tampering is detected (7753.2889ms)
+✔ audit export is team-scoped, verifiable, and tamper-evident; CSV is formula-safe (6425.0198ms)
+✔ rogue input while InfraOps waits for approval: the pending proposal is withdrawn and the attack plays out without an operator decision (5175.7937ms)
+ℹ tests 34
 ℹ suites 0
-ℹ pass 22
+ℹ pass 34
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 55633.7341
+ℹ duration_ms 67432.954
 exit=0

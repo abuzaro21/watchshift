@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, resolve, sep } from 'node:path';
 import { Workspace, type Command, type Ev } from './engine.ts';
-import { FencedError, type Store } from './store.ts';
+import { ConflictError, FencedError, type Store } from './store.ts';
 import { view } from './view.ts';
 import { exportAudit, exportCsv, replay } from './audit.ts';
 import { isAgentId, isRole, type Role } from './model.ts';
@@ -33,20 +33,26 @@ class Limiter {
 export function createApp(o: Opts) {
   const { store } = o;
   const tickMs = o.tickMs ?? 250, speed = o.speed ?? 1, maxLive = o.maxLive ?? 150, idleMs = o.idleMs ?? 15 * 60_000, retentionMs = o.retentionMs ?? 6 * 3600_000;
-  const live = new Map<string, { ws: Workspace; touched: number; streams: number }>();
+  type Entry = { ws: Workspace; touched: number; streams: number; ends: Set<() => void> };
+  const live = new Map<string, Entry>();
+  /** Drop a cached writer that lost a stream conflict, and end its SSE streams so clients reconnect to a fresh one. */
+  const invalidate = (id: string) => { const e = live.get(id); live.delete(id); for (const end of e?.ends ?? []) end(); };
   let fenced: string | null = null;
   const createLimit = new Limiter(30, 3600_000), cmdLimit = new Limiter(40, 10_000), readLimit = new Limiter(240, 10_000);
   let sse = 0;
+  const loading = new Map<string, Promise<Workspace | null>>();
 
   async function get(id: string | undefined) {
     if (!id || !/^[0-9a-f-]{36}$/.test(id)) return null;
     let e = live.get(id);
     if (!e) {
-      const ws = await Workspace.load(store, id, speed);
+      // One load per workspace at a time: two concurrent loads would build two writers with separate locks.
+      let p = loading.get(id);
+      if (!p) { p = Workspace.load(store, id, speed).finally(() => loading.delete(id)); loading.set(id, p); }
+      const ws = await p;
       if (!ws) return null;
-      e = { ws, touched: Date.now(), streams: 0 };
-      live.set(id, e);
-      evict();
+      e = live.get(id);
+      if (!e) { e = { ws, touched: Date.now(), streams: 0, ends: new Set() }; live.set(id, e); evict(); }
     }
     e.touched = Date.now();
     return e;
@@ -66,11 +72,13 @@ export function createApp(o: Opts) {
     try {
       for (const [id, e] of live) {
         if (e.streams === 0 && now - e.touched > idleMs) { live.delete(id); continue; }
-        try { await e.ws.tick(now); } catch (err) { onError(err, id); }
+        try { await e.ws.tick(now); } catch (err) { if (err instanceof ConflictError) invalidate(id); onError(err, id); }
       }
     } finally { ticking = false; }
   }, tickMs);
-  const pruneTimer = setInterval(() => { store.prune(Date.now() - retentionMs).catch((err) => onError(err, 'prune')); }, 10 * 60_000);
+  // Workspaces held in memory are in use (viewed or streaming): never prune them out from under their visitors.
+  const prune = (before: number) => store.prune(before, [...live.keys(), ...loading.keys()]);
+  const pruneTimer = setInterval(() => { prune(Date.now() - retentionMs).catch((err) => onError(err, 'prune')); }, 10 * 60_000);
   function onError(err: unknown, where: string) {
     if (err instanceof FencedError) { fenced = err.message; console.error(`[watchshift] FENCED, refusing writes: ${err.message}`); return; }
     console.error(`[watchshift] ${where}: ${(err as Error).message}`);
@@ -130,10 +138,10 @@ export function createApp(o: Opts) {
       const cur = b.fresh ? null : await get(cookieOf(req));
       if (cur) return send(res, 200, view(cur.ws.S));
       if (!createLimit.ok(ip)) return send(res, 429, { error: 'too many demo workspaces from this address; try again later' });
-      if ((await store.count()) > 5000) await store.prune(Date.now() - 3600_000);
+      if ((await store.count()) > 5000) await prune(Date.now() - 3600_000);
       const id = randomUUID();
       const ws = await Workspace.create(store, id, Math.floor(Math.random() * 1e9), speed);
-      live.set(id, { ws, touched: Date.now(), streams: 0 });
+      live.set(id, { ws, touched: Date.now(), streams: 0, ends: new Set() });
       evict();
       return send(res, 200, view(ws.S), { 'set-cookie': cookie(id, req) });
     }
@@ -149,7 +157,13 @@ export function createApp(o: Opts) {
       const cmd = toCommand(b);
       if (!cmd) return send(res, 400, { error: 'invalid command' });
       const key = typeof b.key === 'string' && b.key.length <= 64 ? b.key : undefined;
-      const r = await e.ws.command(cmd, roleOf(b.as), key);
+      let r;
+      try { r = await e.ws.command(cmd, roleOf(b.as), key); }
+      catch (err) {
+        // Another writer moved this workspace on: drop the stale copy so the next request reloads from the store.
+        if (err instanceof ConflictError) { invalidate(e.ws.S.id); return send(res, 409, { error: 'workspace changed underneath this request; retry' }); }
+        throw err;
+      }
       return send(res, r.ok ? 200 : (r.code ?? 400), r);
     }
     if (p === '/api/replay') {
@@ -170,21 +184,25 @@ export function createApp(o: Opts) {
     return send(res, 404, { error: 'not found' });
   }
 
-  function stream(req: IncomingMessage, res: ServerResponse, e: { ws: Workspace; streams: number; touched: number }, after: number) {
+  function stream(req: IncomingMessage, res: ServerResponse, e: Entry, after: number) {
     if (e.streams >= 4 || sse >= 400) return send(res, 429, { error: 'too many live streams' });
     e.streams++; sse++;
     res.writeHead(200, { ...HEADERS, 'content-type': 'text/event-stream', 'cache-control': 'no-store, no-transform', connection: 'keep-alive', 'x-accel-buffering': 'no' });
-    const write = (evs: Ev[]) => { for (const ev of evs) res.write(`id: ${ev.seq}\nevent: ev\ndata: ${JSON.stringify(ev)}\n\n`); };
+    // Backpressure: a client that stops reading is disconnected once 1 MiB is queued (it resumes with Last-Event-ID).
+    const out = (chunk: string) => { if (res.destroyed) return; if (res.writableLength > 1 << 20) { res.destroy(); return; } res.write(chunk); };
+    const write = (evs: Ev[]) => { for (const ev of evs) out(`id: ${ev.seq}\nevent: ev\ndata: ${JSON.stringify(ev)}\n\n`); };
     let pending: ReturnType<typeof setTimeout> | null = null;
-    const snapshot = () => { pending = null; res.write(`event: snapshot\ndata: ${JSON.stringify(view(e.ws.S))}\n\n`); };
+    const snapshot = () => { pending = null; out(`event: snapshot\ndata: ${JSON.stringify(view(e.ws.S))}\n\n`); };
     // Catch-up: everything after the client's last seen seq (bounded), then the snapshot. Client de-duplicates by seq.
     const start = Math.max(Number.isFinite(after) ? after : 0, e.ws.S.seq - 400);
     write(e.ws.S.events.filter((x) => x.seq > start));
     snapshot();
     const listener = (evs: Ev[]) => { write(evs); pending ??= setTimeout(snapshot, 200); };
     e.ws.listeners.add(listener);
-    const ping = setInterval(() => { res.write(': ping\n\n'); e.touched = Date.now(); }, 15_000);
-    req.on('close', () => { e.ws.listeners.delete(listener); clearInterval(ping); if (pending) clearTimeout(pending); e.streams--; sse--; });
+    const ping = setInterval(() => { out(': ping\n\n'); e.touched = Date.now(); }, 15_000);
+    const end = () => res.end();
+    e.ends.add(end);
+    req.on('close', () => { e.ends.delete(end); e.ws.listeners.delete(listener); clearInterval(ping); if (pending) clearTimeout(pending); e.streams--; sse--; });
   }
 
   async function serveStatic(p: string, res: ServerResponse) {

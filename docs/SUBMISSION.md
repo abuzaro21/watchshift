@@ -44,7 +44,7 @@ Diagram: docs/ARCHITECTURE.md.
 | Token and cost per agent and task | Spend panel and per-task budgets (simulated tokens, estimated $) |
 | Replayable traces of the last N steps | Replay inspector, re-folded from persisted events |
 | Three running agents, distinct jobs | ReleaseOps, SupportOps, InfraOps |
-| Approve, pause, resume, kill, inspect during execution | All enforced server-side; 22 tests + browser tests |
+| Approve, pause, resume, kill, inspect during execution | All enforced server-side; 34 backend tests (SQLite and PostgreSQL) + browser tests |
 | Bonus: multi-team | Engineering vs Customer Ops authority, enforced and logged |
 | Bonus: compliance audit export | JSON/CSV, team-scoped redaction, offline verification |
 

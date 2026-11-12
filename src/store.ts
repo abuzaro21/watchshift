@@ -26,7 +26,8 @@ export interface Store {
   events(ws: string): Promise<StoredEvent[]>;
   effectIds(ws: string): Promise<string[]>;
   /** Delete workspaces idle since before `before` (ms). Returns how many. */
-  prune(before: number): Promise<number>;
+  /** Delete workspaces idle since `before`, except the ids in `keep` (workspaces currently in use). */
+  prune(before: number, keep?: string[]): Promise<number>;
   count(): Promise<number>;
   close(): Promise<void>;
 }
@@ -91,8 +92,8 @@ export class SqliteStore implements Store {
   async effectIds(ws: string) {
     return (this.db.prepare('SELECT op_id FROM effects WHERE ws = ? ORDER BY seq').all(ws) as { op_id: string }[]).map((r) => r.op_id);
   }
-  async prune(before: number) {
-    return this.tx(() => Number(this.db.prepare('DELETE FROM workspaces WHERE last_active < ?').run(before).changes));
+  async prune(before: number, keep: string[] = []) {
+    return this.tx(() => Number(this.db.prepare('DELETE FROM workspaces WHERE last_active < ? AND id NOT IN (SELECT value FROM json_each(?))').run(before, JSON.stringify(keep)).changes));
   }
   async count() { return Number((this.db.prepare('SELECT count(*) AS n FROM workspaces').get() as { n: number }).n); }
   async close() { this.db.close(); }
@@ -154,8 +155,8 @@ export class PgStore implements Store {
   async effectIds(ws: string) {
     return (await this.pool.query(`SELECT op_id FROM ${this.S}effects WHERE ws = $1 ORDER BY seq`, [ws])).rows.map((r) => r.op_id as string);
   }
-  async prune(before: number) {
-    return this.tx(async (c) => (await c.query(`DELETE FROM ${this.S}workspaces WHERE last_active < $1`, [before])).rowCount ?? 0);
+  async prune(before: number, keep: string[] = []) {
+    return this.tx(async (c) => (await c.query(`DELETE FROM ${this.S}workspaces WHERE last_active < $1 AND NOT (id = ANY($2::text[]))`, [before, keep])).rowCount ?? 0);
   }
   async count() { return Number((await this.pool.query(`SELECT count(*) AS n FROM ${this.S}workspaces`)).rows[0].n); }
   async close() { await this.pool.end(); }

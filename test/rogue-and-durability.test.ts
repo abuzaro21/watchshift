@@ -42,11 +42,12 @@ test('rogue agent: blocked, quarantined, killed, stale retry fenced, zero rows l
   assert.match(String(evs(ws, 'ScenarioInjected')[0].data.text), new RegExp(ROGUE_TEXT.slice(0, 20)));
 });
 
-test('rogue trigger is idempotent and needs an acting role', async () => {
+test('rogue trigger is idempotent and needs Engineering authority', async () => {
   const { ws, clock } = await fresh();
   await run(ws, clock, () => ws.S.agents.infraops.step >= 1);
   assert.equal((await ws.command({ type: 'trigger_rogue' }, 'auditor', undefined, clock.now)).code, 403);
-  assert.ok((await ws.command({ type: 'trigger_rogue' }, 'cx-lead', undefined, clock.now)).ok);
+  assert.equal((await ws.command({ type: 'trigger_rogue' }, 'cx-lead', undefined, clock.now)).code, 403, 'Customer Ops has no authority over InfraOps');
+  assert.ok((await ws.command({ type: 'trigger_rogue' }, 'eng-oncall', undefined, clock.now)).ok);
   assert.equal((await ws.command({ type: 'trigger_rogue' }, 'eng-oncall', undefined, clock.now)).code, 409);
 });
 

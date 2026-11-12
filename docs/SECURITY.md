@@ -20,7 +20,7 @@ audit trail is tamper-evident; the service degrades safely under abuse.
 | Path traversal on static files | Resolved path must stay under `public/`; malformed escapes rejected | "hostile HTTP input" |
 | CSV formula injection | Cells starting with `= + - @ TAB CR` are quoted and prefixed | audit test |
 | XSS | React escapes all text; strict CSP (`script-src 'self'`, no inline script, `frame-ancestors 'none'`) | headers test |
-| Resource exhaustion | Per-IP limits: 30 new workspaces/h, 40 commands/10 s, 240 reads/10 s; 4 SSE streams per workspace, 400 total; idle eviction; 6 h retention prune; idempotency cache capped | `src/server.ts` |
+| Resource exhaustion | Per-IP limits: 30 new workspaces/h, 40 commands/10 s, 240 reads/10 s; 4 SSE streams per workspace, 400 total; idle eviction; 6 h retention prune that skips workspaces in use; slow SSE readers dropped above 1 MiB queued | `src/server.ts` |
 | Split brain (two processes) | Owner epoch claimed per process; appends re-check it in the transaction; a fenced process returns 503 | "restart while an action is in flight", fencing test |
 
 Headers on every response: `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
