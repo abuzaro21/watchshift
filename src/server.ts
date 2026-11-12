@@ -1,6 +1,6 @@
 // HTTP API + SSE + static UI. Tenant = the workspace named by an HttpOnly cookie; no endpoint takes a workspace id.
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, resolve, sep } from 'node:path';
 import { Workspace, type Command, type Ev } from './engine.ts';
@@ -127,6 +127,10 @@ export function createApp(o: Opts) {
   async function handle(req: IncomingMessage, res: ServerResponse) {
     const url = new URL(req.url ?? '/', 'http://x');
     const p = url.pathname, ip = ipOf(req);
+    if (process.env.WATCHSHIFT_DEBUG_PROXY === '1' && p === '/api/health') { // proxy-chain shape for choosing trustProxyHops; addresses hashed, never logged
+      const h = (v: unknown) => (v ? createHash('sha256').update(String(v).trim()).digest('hex').slice(0, 8) : '-');
+      console.log(`[watchshift] proxy xff=[${String(req.headers['x-forwarded-for'] ?? '').split(',').map(h).join(',')}] socket=${h(req.socket.remoteAddress)} cf=${h(req.headers['cf-connecting-ip'])} tci=${h(req.headers['true-client-ip'])} xri=${h(req.headers['x-real-ip'])}`);
+    }
     if (p === '/api/health') return send(res, fenced ? 503 : 200, { ok: !fenced, store: store.kind, fenced, live: live.size, streams: sse, commit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? null });
     if (p.startsWith('/api/')) {
       if (req.method === 'POST' && !sameOrigin(req)) return send(res, 403, { error: 'cross-origin request refused' });
