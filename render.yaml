@@ -16,8 +16,10 @@ services:
           property: connectionString
       - key: WATCHSHIFT_PG_SCHEMA
         value: watchshift
-      - key: WATCHSHIFT_TRUST_PROXY_HOPS   # Render's proxy appends the client address; only that entry is trusted
-        value: "1"
+      # Render's edge appends three X-Forwarded-For entries: the client address, then two proxy hops (measured
+      # 2026-11-12 with WATCHSHIFT_DEBUG_PROXY=1, hashed). Anything further left is client-supplied and ignored.
+      - key: WATCHSHIFT_TRUST_PROXY_HOPS
+        value: "3"
 databases:
   - name: watchshift-db
     plan: free
