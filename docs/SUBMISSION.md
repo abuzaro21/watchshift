@@ -20,9 +20,9 @@ poisoned runbook try to export 12,408 customer rows: blocked before any effect, 
 stale retry fenced. Zero rows leave; the negative control shows they would have without the tower.
 
 ## Links
-- Live demo: LIVE_URL
+- Live demo: https://watchshift-l5nx.onrender.com (free hosting: the first load after idle can take up to a minute)
 - Repository: https://github.com/abuzaro21/watchshift
-- Video (90 s): FILM_URL
+- Video (90 s): https://github.com/abuzaro21/watchshift/releases/download/v1.0.0/watchshift-film.mp4 (MP4, 1920×1080, captions in the file and as SRT)
 - Architecture snapshot: https://github.com/abuzaro21/watchshift/blob/main/docs/ARCHITECTURE.md
 - Rogue-agent failure test: https://github.com/abuzaro21/watchshift/blob/main/docs/FAILURE-TEST.md
 - Thesis (≤300 words): https://github.com/abuzaro21/watchshift/blob/main/docs/THESIS.md

@@ -1,5 +1,9 @@
 # Deploy
 
+Live: **https://watchshift-l5nx.onrender.com**. Render workspace `WATCHSHIFT`, blueprint `watchshift`: service
+`watchshift-l5nx` and database `watchshift-db-l5nx` (Render adds the suffix), both on free plans. The free
+database expires 2026-12-12.
+
 The hosted demo runs on Render's **free** plans: one Docker web service and one PostgreSQL 16 database, both in
 Frankfurt, described by [`render.yaml`](../render.yaml). `autoDeploy` is off; every deploy is triggered on purpose.
 

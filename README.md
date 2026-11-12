@@ -6,8 +6,8 @@ An operator control tower for AI agents: watch a live fleet, approve risky actio
 and export an audit trail anyone can verify.</p>
 
 <p align="center">
-<b>Live demo:</b> <a href="LIVE_URL">LIVE_URL</a> ·
-<b>Film (90 s):</b> <a href="FILM_URL">FILM_URL</a> ·
+<b>Live demo:</b> <a href="https://watchshift-l5nx.onrender.com">watchshift-l5nx.onrender.com</a> ·
+<b>Film (90 s):</b> <a href="https://github.com/abuzaro21/watchshift/releases/download/v1.0.0/watchshift-film.mp4">watchshift-film.mp4</a> ·
 Entry for the DOO Builders League challenge <i>The Agent Control Tower</i>
 </p>
 

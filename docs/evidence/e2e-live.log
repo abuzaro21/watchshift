@@ -1,10 +1,11 @@
+# E2E_BASE_URL=https://watchshift-l5nx.onrender.com, commit {"ok":true,"store":"postgres","fenced":null,"live":1,"streams":0,"commit":"847cbf5"}, 2026-11-12T02:23:08Z
 
 Running 4 tests using 2 workers
 
-  ok 1 [desktop] › e2e\watchshift.spec.ts:13:1 › operator approves, pauses, resumes, is limited by role, and exports a verifiable audit (7.0s)
-  ok 2 [mobile] › e2e\watchshift.spec.ts:13:1 › operator approves, pauses, resumes, is limited by role, and exports a verifiable audit (8.1s)
-  ok 3 [desktop] › e2e\watchshift.spec.ts:36:1 › rogue agent is blocked and quarantined, killed, stale retry is fenced, nothing leaves, replay explains it (5.0s)
+  ok 2 [desktop] › e2e\watchshift.spec.ts:13:1 › operator approves, pauses, resumes, is limited by role, and exports a verifiable audit (7.3s)
+  ok 1 [mobile] › e2e\watchshift.spec.ts:13:1 › operator approves, pauses, resumes, is limited by role, and exports a verifiable audit (8.5s)
+  ok 3 [desktop] › e2e\watchshift.spec.ts:36:1 › rogue agent is blocked and quarantined, killed, stale retry is fenced, nothing leaves, replay explains it (4.3s)
   ok 4 [mobile] › e2e\watchshift.spec.ts:36:1 › rogue agent is blocked and quarantined, killed, stale retry is fenced, nothing leaves, replay explains it (4.9s)
 
-  4 passed (13.6s)
+  4 passed (14.1s)
 exit=0
