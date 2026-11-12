@@ -9,7 +9,7 @@ import { view } from './view.ts';
 import { exportAudit, exportCsv, replay } from './audit.ts';
 import { isAgentId, isRole, type Role } from './model.ts';
 
-export type Opts = { store: Store; tickMs?: number; speed?: number; publicDir?: string; maxLive?: number; idleMs?: number; retentionMs?: number; secureCookies?: boolean };
+export type Opts = { store: Store; tickMs?: number; speed?: number; publicDir?: string; maxLive?: number; idleMs?: number; retentionMs?: number; secureCookies?: boolean; trustProxyHops?: number };
 const COOKIE = 'watchshift_ws';
 const HEADERS: Record<string, string> = {
   'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY',
@@ -82,7 +82,13 @@ export function createApp(o: Opts) {
     res.end(s);
   };
   const cookieOf = (req: IncomingMessage) => /(?:^|;\s*)watchshift_ws=([0-9a-f-]{36})/.exec(req.headers.cookie ?? '')?.[1];
-  const ipOf = (req: IncomingMessage) => (String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || req.socket.remoteAddress || '?');
+  // Client address for rate limits. X-Forwarded-For is client-controlled except for the entries appended by proxies we
+  // trust, so only the entry `trustProxyHops` from the right is used (0 = ignore the header, use the socket address).
+  const hops = o.trustProxyHops ?? 0;
+  const ipOf = (req: IncomingMessage) => {
+    const xff = hops > 0 ? String(req.headers['x-forwarded-for'] ?? '').split(',').map((x) => x.trim()).filter(Boolean) : [];
+    return (xff.length >= hops ? xff[xff.length - hops] : undefined) || req.socket.remoteAddress || '?';
+  };
   const roleOf = (v: unknown): Role => (isRole(v) ? v : 'eng-oncall');
   async function body(req: IncomingMessage): Promise<Record<string, unknown>> {
     if (!/^application\/json\b/.test(req.headers['content-type'] ?? '')) throw Object.assign(new Error('content-type must be application/json'), { code: 415 });

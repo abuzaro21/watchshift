@@ -11,16 +11,16 @@ free-database allowance.
 
 ## Steps
 
-1. In the Render dashboard, create a workspace named `WATCHSHIFT` on the free Hobby plan (owner action; no payment
-   method change).
-2. Connect the GitHub repository `abuzaro21/watchshift` to that workspace.
-3. **New > Blueprint**, select the repository; Render reads `render.yaml` and creates `watchshift` (web, free) and
-   `watchshift-db` (Postgres 16, free). The database URL is injected as `DATABASE_URL`; nothing secret is in the repo.
-4. Wait for the deploy, then check:
+1. Workspace: `WATCHSHIFT` on the free Hobby plan, created by the owner (no payment method change).
+2. Blueprint from the public repository `https://github.com/abuzaro21/watchshift`, file `render.yaml`, auto-sync off.
+   Render creates `watchshift` (web, free) and `watchshift-db` (Postgres 16, free). The database URL is injected as
+   `DATABASE_URL` by `fromDatabase`; no credential is typed, copied or committed.
+3. Review the plan (two free resources, nothing else), approve it, wait for the deploy, then check:
    ```bash
    curl -s https://<service>.onrender.com/api/health     # {"ok":true,"store":"postgres",...}
    E2E_BASE_URL=https://<service>.onrender.com npx playwright test
    ```
+4. Later deploys are deliberate: push, then plan and approve the blueprint again (or trigger a deploy).
 
 ## Free-plan facts to plan around
 

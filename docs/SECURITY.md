@@ -35,7 +35,9 @@ Headers on every response: `Content-Security-Policy`, `X-Content-Type-Options: n
 - **Simulated world.** No real deploys, refunds, emails, clusters or storage. The "external destination" in the rogue
   scenario is a fictitious `example.net` name; nothing is sent anywhere.
 - **Simulated tokens and cost.** Estimates from a visible rate card, labelled as such.
-- **Rate limits are per process and per IP** (as seen through the host's proxy header), not distributed.
+- **Rate limits are per process and per IP**, not distributed. The client address is the socket address, or with
+  `WATCHSHIFT_TRUST_PROXY_HOPS=N` the Nth `X-Forwarded-For` entry from the right (the one the trusted proxy appended);
+  entries a client forges further left are ignored (regression test in `test/failures.test.ts`).
 
 ## Secrets and personal data
 

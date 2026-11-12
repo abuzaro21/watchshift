@@ -16,6 +16,8 @@ services:
           property: connectionString
       - key: WATCHSHIFT_PG_SCHEMA
         value: watchshift
+      - key: WATCHSHIFT_TRUST_PROXY_HOPS   # Render's proxy appends the client address; only that entry is trusted
+        value: "1"
 databases:
   - name: watchshift-db
     plan: free

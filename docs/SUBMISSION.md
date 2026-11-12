@@ -48,11 +48,30 @@ Diagram: docs/ARCHITECTURE.md.
 | Bonus: multi-team | Engineering vs Customer Ops authority, enforced and logged |
 | Bonus: compliance audit export | JSON/CSV, team-scoped redaction, offline verification |
 
+## Notes (checklist field: AI tools, key decisions, out of scope)
+**AI tools used.** Claude Code (Claude Opus 5.5) wrote the code, tests, docs and film pipeline; OpenAI Codex
+(gpt-6.1-sol, read-only) gave an independent architecture proposal and code review; Kokoro-82M (local, open weights)
+voiced the film. Full detail: docs/AI-DISCLOSURE.md.
+
+**Key decisions.** Event sourcing with a SHA-256 chain, so replay and audit come from the same log the UI folds.
+One commit gate checked at dispatch and again at commit (status, epoch, policy, approval binding, resource
+version, op id, budget). Approvals bind a hash of the exact action rather than an agent or task. Kill bumps an
+epoch that fences stale workers. Policy never reads the agent's rationale, so a persuasive prompt cannot widen
+authority. Team boundaries are enforced in the backend, not hidden in the UI. Deterministic planners keep the demo
+reproducible and free to run. Rationale: docs/ARCHITECTURE-DECISIONS.md.
+
+**Out of scope.** Real authentication (the role switcher is a demo control), live LLM calls, real money or
+infrastructure, multi-region deployment, long-term retention (demo workspaces expire after 6 hours).
+
 ## Honest limits
 Simulated company and tokens; deterministic planners (no live LLM calls); the operator role is a demo switch, not
 authentication; free hosting sleeps when idle (first load can take up to a minute).
 
 ## Owner action to submit
 1. Sign in to https://build.doo.ooo and open the challenge *The Agent Control Tower*.
-2. Paste the fields above; attach or link the video.
-3. Submit before the deadline (page showed about 2026-11-15 23:30 UTC on 2026-11-12).
+2. Paste the fields above. The form asks for: public repo URL, live demo URL (required), 90-second video link,
+   and notes (use the Notes block above).
+3. Video: the form expects a link (Loom or video). Use the GitHub release asset link above, or upload
+   `watchshift-film.mp4` to Loom or YouTube (unlisted) from your account and paste that link.
+4. Submit before the deadline. The page says "Open until Nov 15, 2026"; its countdown read "3d 22h left" at
+   2026-11-12 01:52 UTC, which puts the close at roughly 23:00–23:59 UTC on 15 November. Submit well before that.

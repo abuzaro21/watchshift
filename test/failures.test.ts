@@ -94,6 +94,15 @@ test('hostile HTTP input: origin, content-type, size, JSON shape, unknown comman
   } finally { await app.close(); }
 });
 
+test('rate limits cannot be dodged by forging X-Forwarded-For', async () => {
+  const { app, post } = await server();
+  try {
+    const codes: number[] = [];
+    for (let i = 0; i < 50; i++) codes.push((await post('{"type":"drop_tables"}', { 'x-forwarded-for': `10.9.${i}.1` })).status);
+    assert.ok(codes.includes(429), 'forged addresses must share the real client bucket');
+  } finally { await app.close(); }
+});
+
 test('repeated SSE delivery: reconnecting with Last-Event-ID resumes after it, with no duplicate or missing seq', async () => {
   const { app, base, cookie } = await server();
   try {
