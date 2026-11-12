@@ -80,7 +80,8 @@ export function verifyExport(x: AuditExport): ChainCheck & { redacted: number } 
   return { ok: true, checked: x.events.length, head: prev, redacted };
 }
 
-const csvCell = (v: unknown) => { const s = typeof v === 'string' ? v : JSON.stringify(v ?? ''); return /[",\n\r]/.test(s) || /^[=+\-@]/.test(s) ? `"${(/^[=+\-@]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"` : s; };
+const FORMULA = /^[=+\-@\t\r]/;
+const csvCell = (v: unknown) => { const s = typeof v === 'string' ? v : JSON.stringify(v ?? ''); return /[",\n\r]/.test(s) || FORMULA.test(s) ? `"${(FORMULA.test(s) ? `'${s}` : s).replace(/"/g, '""')}"` : s; };
 export function exportCsv(x: AuditExport): string {
   const rows = [['seq', 'time_utc', 'type', 'agent', 'team', 'task', 'step', 'actor', 'summary', 'hash']];
   for (const e of x.events) {

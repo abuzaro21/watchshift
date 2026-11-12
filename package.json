@@ -13,7 +13,6 @@
     "typecheck": "node scripts/typecheck.mjs",
     "test": "node --disable-warning=ExperimentalWarning --test \"test/**/*.test.ts\"",
     "test:e2e": "playwright test",
-    "failure-test": "node --disable-warning=ExperimentalWarning scripts/failure-test.ts",
     "verify-audit": "node --disable-warning=ExperimentalWarning scripts/verify-audit.ts"
   },
   "dependencies": { "pg": "8.23.1" },

@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fresh, run, evs, pendingFor } from './helpers.ts';
+import { fresh, run, evs, pendingFor, testStore } from './helpers.ts';
 import { Workspace, unguardedExecute, ROGUE_TEXT } from '../src/engine.ts';
-import { SqliteStore, FencedError } from '../src/store.ts';
+import { FencedError } from '../src/store.ts';
 import { exportAudit, exportCsv, replay, verifyChain, verifyExport } from '../src/audit.ts';
 
 const tmpDb = () => join(mkdtempSync(join(tmpdir(), 'watchshift-')), 'w.db');
@@ -52,12 +52,12 @@ test('rogue trigger is idempotent and needs an acting role', async () => {
 
 test('restart while waiting for approval: the approval survives and still works', async () => {
   const path = tmpDb();
-  const s1 = new SqliteStore(path);
+  const s1 = await testStore(path);
   const { ws, clock } = await fresh('ws-r1', s1);
   await run(ws, clock, () => !!pendingFor(ws, 'releaseops'));
   const ap = pendingFor(ws, 'releaseops')!;
   await s1.close();
-  const s2 = new SqliteStore(path); await s2.claim('process-2');
+  const s2 = await testStore(path); await s2.claim('process-2');
   const ws2 = (await Workspace.load(s2, 'ws-r1', 1, clock.now))!;
   assert.equal(ws2.S.agents.releaseops.status, 'WAITING_APPROVAL');
   assert.ok((await ws2.command({ type: 'approve', approvalId: ap.id, bindingHash: ap.hash }, 'eng-oncall', undefined, clock.now)).ok);
@@ -67,12 +67,12 @@ test('restart while waiting for approval: the approval survives and still works'
 
 test('restart while an action is in flight: reconciled as not committed, epoch bumped, re-planned, never duplicated', async () => {
   const path = tmpDb();
-  const s1 = new SqliteStore(path);
+  const s1 = await testStore(path);
   const { ws, clock } = await fresh('ws-r2', s1);
   await run(ws, clock, () => !!ws.S.agents.supportops.inflight && ws.S.agents.supportops.inflight.proposal.tool === 'ticket.classify');
   const op = ws.S.agents.supportops.inflight!.opId, epoch = ws.S.agents.supportops.epoch;
   // process 2 takes over the database; the old process is fenced and can no longer write anything
-  const s2 = new SqliteStore(path); await s2.claim('process-2');
+  const s2 = await testStore(path); await s2.claim('process-2');
   await assert.rejects(ws.tick(ws.S.agents.supportops.inflight!.commitAt), FencedError);
   const ws2 = (await Workspace.load(s2, 'ws-r2', 1, clock.now))!;
   const rec = evs(ws2, 'EffectReconciled', 'supportops')[0];
@@ -86,7 +86,7 @@ test('restart while an action is in flight: reconciled as not committed, epoch b
 
 test('replay is re-folded from persisted events and matches live state; tampering is detected', async () => {
   const path = tmpDb();
-  const s1 = new SqliteStore(path);
+  const s1 = await testStore(path);
   const { ws, clock } = await fresh('ws-r3', s1);
   await run(ws, clock, () => ws.S.agents.infraops.step >= 8 || !!pendingFor(ws, 'infraops'));
   await ws.command({ type: 'trigger_rogue' }, 'eng-oncall', undefined, clock.now);
@@ -100,13 +100,14 @@ test('replay is re-folded from persisted events and matches live state; tamperin
   assert.equal(last.after.status, 'QUARANTINED');
   assert.equal(last.after.costUsd, ws.S.agents.infraops.costUsd);
   // reload from disk: identical state
-  const s2 = new SqliteStore(path); await s2.claim('p2');
+  const s2 = await testStore(path); await s2.claim('p2');
   const ws2 = (await Workspace.load(s2, 'ws-r3', 1, clock.now))!;
   assert.deepEqual(ws2.S.world, ws.S.world);
   assert.equal(ws2.S.head, ws.S.head);
   // tamper with one stored event: load refuses the workspace
-  const db = (s2 as unknown as { db: { prepare: (q: string) => { run: (...a: unknown[]) => void } } }).db;
-  db.prepare("UPDATE events SET body = replace(body, 'customers_full', 'cost_report_daily') WHERE ws = 'ws-r3' AND type = 'ActionProposed'").run();
+  const tamper = (t: string) => `UPDATE ${t} SET body = replace(body, 'customers_full', 'cost_report_daily') WHERE ws = 'ws-r3' AND type = 'ActionProposed'`;
+  const raw = s2 as unknown as { db?: { exec: (q: string) => void }; pool?: { query: (q: string) => Promise<unknown> }; S?: string };
+  if (raw.db) raw.db.exec(tamper('events')); else await raw.pool!.query(tamper(`${raw.S}events`));
   await assert.rejects(Workspace.load(s2, 'ws-r3'), /audit chain broken/);
   await s1.close(); await s2.close();
 });

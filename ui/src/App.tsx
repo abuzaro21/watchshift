@@ -127,7 +127,7 @@ export function App() {
           {view.agents.map((a) => <AgentCard key={a.id} a={a} role={role} send={send} askConfirm={setConfirm} openReplay={() => setReplayOf(a.id)} />)}
         </section>
         <section className="col center">
-          <div className={`panel approvals ${pending.length ? 'has' : ''}`} aria-label="Approval queue">
+          <section className={`panel approvals ${pending.length ? 'has' : ''}`} aria-label="Approval queue">
             <h2 className="panel-title">Approval queue <span className={`count ${pending.length ? 'hot' : ''}`}>{pending.length}</span></h2>
             {pending.length === 0 && <p className="empty">No action is waiting for a human. Risky actions stop here until someone with authority decides.</p>}
             {pending.map((ap) => <ApprovalCard key={ap.id} ap={ap} role={role} send={send} />)}
@@ -136,7 +136,7 @@ export function App() {
                 <ul>{view.approvals.recent.map((ap) => <li key={ap.id}><span className={`pill s-${ap.status}`}>{ap.status}</span> {AGENT_NAME[ap.agent]} · <code>{ap.tool}</code> <span className="muted">{ap.decidedBy?.replace('operator:', '') ?? ''}</span></li>)}</ul>
               </details>
             )}
-          </div>
+          </section>
           <Timeline events={events} />
         </section>
         <section className="col side">
@@ -267,7 +267,7 @@ function AgentCard({ a, role, send, askConfirm, openReplay }: { a: Agent; role: 
       <div className="controls">
         {a.status === 'PAUSED' || a.status === 'QUARANTINED'
           ? <button className="btn" disabled={!canAct} onClick={() => send({ type: 'resume', agent: a.id }, `${a.name} resumed: it re-plans from current state`)}>Resume</button>
-          : <button className="btn" disabled={!canAct || terminal || a.status === 'BLOCKED' && false} onClick={() => send({ type: 'pause', agent: a.id }, `${a.name} paused; pending approvals revoked`)}>Pause</button>}
+          : <button className="btn" disabled={!canAct || terminal} onClick={() => send({ type: 'pause', agent: a.id }, `${a.name} paused; pending approvals revoked`)}>Pause</button>}
         {a.status === 'BLOCKED' && <button className="btn" disabled={!canAct} onClick={() => send({ type: 'raise_budget', agent: a.id, usd: 0.1 }, `${a.name} budget +$0.10`)}>+ $0.10 budget</button>}
         <button className="btn danger" disabled={!canAct || a.status === 'KILLED'} onClick={() => askConfirm({
           title: `Kill ${a.name}?`, danger: true, action: `Kill ${a.name}`,

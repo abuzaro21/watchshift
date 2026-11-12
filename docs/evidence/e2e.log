@@ -1,0 +1,9 @@
+
+Running 4 tests using 2 workers
+
+  ok 1 [mobile] › e2e\watchshift.spec.ts:13:1 › operator approves, pauses, resumes, is limited by role, and exports a verifiable audit (4.2s)
+  ok 2 [desktop] › e2e\watchshift.spec.ts:13:1 › operator approves, pauses, resumes, is limited by role, and exports a verifiable audit (4.3s)
+  ok 3 [mobile] › e2e\watchshift.spec.ts:36:1 › rogue agent is blocked and quarantined, killed, stale retry is fenced, nothing leaves, replay explains it (2.3s)
+  ok 4 [desktop] › e2e\watchshift.spec.ts:36:1 › rogue agent is blocked and quarantined, killed, stale retry is fenced, nothing leaves, replay explains it (2.2s)
+
+  4 passed (7.6s)

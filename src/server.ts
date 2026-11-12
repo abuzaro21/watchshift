@@ -2,7 +2,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, resolve, sep } from 'node:path';
 import { Workspace, type Command, type Ev } from './engine.ts';
 import { FencedError, type Store } from './store.ts';
 import { view } from './view.ts';
@@ -182,9 +182,11 @@ export function createApp(o: Opts) {
   }
 
   async function serveStatic(p: string, res: ServerResponse) {
-    const dir = o.publicDir ?? 'public';
-    let file = normalize(join(dir, decodeURIComponent(p)));
-    if (!file.startsWith(normalize(dir))) return send(res, 400, 'bad path');
+    const dir = resolve(o.publicDir ?? 'public');
+    let rel: string;
+    try { rel = decodeURIComponent(p); } catch { return send(res, 400, 'bad path'); }
+    let file = resolve(join(dir, rel));
+    if (file !== dir && !file.startsWith(dir + sep)) return send(res, 400, 'bad path');
     try { if (!(await stat(file)).isFile()) throw new Error(); } catch { file = join(dir, 'index.html'); }
     try {
       const data = await readFile(file);
